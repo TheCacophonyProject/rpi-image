@@ -11,6 +11,9 @@ from wpasupplicantconf import WpaSupplicantConf
 
 from .mount import Mount
 
+# Used for configuration & installation access
+PROTECTED_SSID = 'skynet'
+
 
 class Tool(cli.Application):
     """Update the identity & WiFi details of a Cacophony Project Raspbian
@@ -91,6 +94,8 @@ class WifiSetCommand(cli.Application):
     """
 
     def main(self, device, ssid, password):
+        if ssid == PROTECTED_SSID:
+            sys.exit("This SSID can't be changed.")
         with RaspbianMount(device) as mount_dir:
             conf = parse_wpa_supplicant_conf(mount_dir)
             conf.add_network(ssid, psk='"{}"'.format(password))
@@ -105,6 +110,8 @@ class WifiRemoveCommand(cli.Application):
     """
 
     def main(self, device, ssid):
+        if ssid == PROTECTED_SSID:
+            sys.exit("This SSID can't be removed.")
         with RaspbianMount(device) as mount_dir:
             conf = parse_wpa_supplicant_conf(mount_dir)
             conf.remove_network(ssid)
@@ -122,7 +129,9 @@ class WifiClearCommand(cli.Application):
     def main(self, device):
         with RaspbianMount(device) as mount_dir:
             conf = parse_wpa_supplicant_conf(mount_dir)
-            conf.networks().clear()
+            for name in list(conf.networks().keys()):
+                if name != PROTECTED_SSID:
+                    conf.remove_network(name)
             write_wpa_supplicant_conf(mount_dir, conf)
 
         print("All WiFi networks removed.")

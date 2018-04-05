@@ -1,3 +1,4 @@
+import contextlib
 import os
 from os import path
 import sys
@@ -6,15 +7,16 @@ from textwrap import dedent
 
 from plumbum import cli
 from plumbum.cmd import fdisk, partprobe
+from wpasupplicantconf import WpaSupplicantConf
 
 from .mount import Mount
 
 
 class Tool(cli.Application):
+    """Update the identity & WiFi details of a Cacophony Project Raspbian
+    image stored on a SD card
     """
-    card-tool can update the identity & wifi details of a Cacophony
-    Project Raspbian image stored on a SD card.
-    """
+    PROGNAME = 'cardtool'
 
     def main(self, *args):
         if args:
@@ -28,7 +30,7 @@ class Tool(cli.Application):
 
 @Tool.subcommand("id")
 class IdCommand(cli.Application):
-    """The "id" command sets the identity of a Cacophony Project Raspbian image.
+    """Set the identity of a Cacophony Project Raspbian image
     """
 
     apiUrl = cli.SwitchAttr(
@@ -42,18 +44,107 @@ class IdCommand(cli.Application):
         # card (in case it's just been imaged).
         partprobe(device)
 
-        root_partition = get_root_partition(device)
-
-        with tempfile.TemporaryDirectory() as mount_dir:
-            with Mount(root_partition, mount_dir):
-                if not is_raspian(mount_dir):
-                    sys.exit("This does not appear to be a Raspbian image.")
-                set_minion_id(mount_dir, name)
-                set_hostname(mount_dir, name)
-                update_hosts(mount_dir, name)
-                set_uploader_conf(mount_dir, self.apiUrl, name, group)
+        with RaspbianMount(device) as mount_dir:
+            set_minion_id(mount_dir, name)
+            set_hostname(mount_dir, name)
+            update_hosts(mount_dir, name)
+            set_uploader_conf(mount_dir, self.apiUrl, name, group)
 
         print("Card updated.")
+
+
+@Tool.subcommand("wifi")
+class WifiCommand(cli.Application):
+    """Manipulate the wifi connection details stored in a Raspbian image
+    """
+
+    def main(self, *args):
+        if args:
+            print("Unknown command {0!r}".format(args[0]))
+            return 1
+        if not self.nested_command:
+            print("No subcommand given")
+            return 1
+        return 0
+
+
+@WifiCommand.subcommand("list")
+class WifiListCommand(cli.Application):
+    """Show the configured wifi networks on the SD card
+    """
+
+    def main(self, device):
+        with RaspbianMount(device) as mount_dir:
+            print("Configured wifi networks:")
+            conf = parse_wpa_supplicant_conf(mount_dir)
+            networks = conf.networks()
+            if networks:
+                for name in conf.networks().keys():
+                    print(name)
+            else:
+                print("(none)")
+
+
+@WifiCommand.subcommand("set")
+class WifiSetCommand(cli.Application):
+    """Adds or updates a WiFi network on the SD card
+    """
+
+    def main(self, device, ssid, password):
+        with RaspbianMount(device) as mount_dir:
+            conf = parse_wpa_supplicant_conf(mount_dir)
+            conf.add_network(ssid, psk='"{}"'.format(password))
+            write_wpa_supplicant_conf(mount_dir, conf)
+
+        print("{} network configured.".format(ssid))
+
+
+@WifiCommand.subcommand("remove")
+class WifiRemoveCommand(cli.Application):
+    """Remove a WiFi network from the SD card
+    """
+
+    def main(self, device, ssid):
+        with RaspbianMount(device) as mount_dir:
+            conf = parse_wpa_supplicant_conf(mount_dir)
+            conf.remove_network(ssid)
+            write_wpa_supplicant_conf(mount_dir, conf)
+
+
+        print("{} network removed.".format(ssid))
+
+
+@WifiCommand.subcommand("clear")
+class WifiClearCommand(cli.Application):
+    """Remove all WiFi networks from the SD card
+    """
+
+    def main(self, device):
+        with RaspbianMount(device) as mount_dir:
+            conf = parse_wpa_supplicant_conf(mount_dir)
+            conf.networks().clear()
+            write_wpa_supplicant_conf(mount_dir, conf)
+
+        print("All WiFi networks removed.")
+
+
+class RaspbianMount:
+    def __init__(self, device):
+        self.stack = None
+        self.root_partition = get_root_partition(device)
+
+    def __enter__(self):
+        with contextlib.ExitStack() as stack:
+            mount_dir = stack.enter_context(tempfile.TemporaryDirectory())
+            stack.enter_context(Mount(self.root_partition, mount_dir))
+            if not is_raspian(mount_dir):
+                raise OSError("Not a Raspbian image?")
+
+            self.stack = stack.pop_all()
+            return mount_dir
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stack.close()
 
 
 def get_root_partition(device):
@@ -111,6 +202,17 @@ def set_uploader_conf(root_dir, url, name, group):
             """).format(url=url, group=group, name=name))
 
     try_delete(path.join(root_dir, "etc", "thermal-uploader-priv.yaml"))
+
+def parse_wpa_supplicant_conf(root):
+    with open(wpa_supplicant_path(root)) as f:
+        return WpaSupplicantConf(f)
+
+def write_wpa_supplicant_conf(root, conf):
+    with open(wpa_supplicant_path(root), "wt") as f:
+        conf.write(f)
+
+def wpa_supplicant_path(root):
+    return path.join(root, "etc", "wpa_supplicant", "wpa_supplicant.conf")
 
 
 def try_delete(filename):

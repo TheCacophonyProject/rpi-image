@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import os
 from os import path
 import sys
@@ -7,7 +5,9 @@ import tempfile
 from textwrap import dedent
 
 from plumbum import cli
-from plumbum.cmd import fdisk, mount, umount, partprobe
+from plumbum.cmd import fdisk, partprobe
+
+from .mount import Mount
 
 
 class Tool(cli.Application):
@@ -111,28 +111,6 @@ def set_uploader_conf(root_dir, url, name, group):
             """).format(url=url, group=group, name=name))
 
     try_delete(path.join(root_dir, "etc", "thermal-uploader-priv.yaml"))
-
-
-class Mount:
-    """This context manager handles mounting and unmounting of a
-    device. The mount is created when the context manager is entered
-    and unmounted when the context manager exits.
-    """
-
-    def __init__(self, device, mount_point):
-        self.mount_point = mount_point
-        self.args = [
-            device,
-            mount_point,
-        ]
-
-    def __enter__(self):
-        if not path.isdir(self.mount_point):
-            os.makedirs(self.mount_point)
-        mount(*self.args)
-
-    def __exit__(self, _, __, ___):
-        umount(self.mount_point)
 
 
 def try_delete(filename):

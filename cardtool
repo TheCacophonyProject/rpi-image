@@ -1,0 +1,4 @@
+#!/bin/sh
+
+py=`which python`
+exec sudo -E $py -m card.tool $@

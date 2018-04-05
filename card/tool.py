@@ -19,6 +19,7 @@ class Tool(cli.Application):
     """Update the identity & WiFi details of a Cacophony Project Raspbian
     image stored on a SD card
     """
+
     PROGNAME = 'cardtool'
 
     def main(self, *args):
@@ -117,7 +118,6 @@ class WifiRemoveCommand(cli.Application):
             conf.remove_network(ssid)
             write_wpa_supplicant_conf(mount_dir, conf)
 
-
         print("{} network removed.".format(ssid))
 
 
@@ -212,13 +212,16 @@ def set_uploader_conf(root_dir, url, name, group):
 
     try_delete(path.join(root_dir, "etc", "thermal-uploader-priv.yaml"))
 
+
 def parse_wpa_supplicant_conf(root):
     with open(wpa_supplicant_path(root)) as f:
         return WpaSupplicantConf(f)
 
+
 def write_wpa_supplicant_conf(root, conf):
     with open(wpa_supplicant_path(root), "wt") as f:
         conf.write(f)
+
 
 def wpa_supplicant_path(root):
     return path.join(root, "etc", "wpa_supplicant", "wpa_supplicant.conf")

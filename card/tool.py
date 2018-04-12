@@ -104,7 +104,6 @@ class WifiSetCommand(cli.Application):
 
         print("{} network configured.".format(ssid))
 
-
 @WifiCommand.subcommand("remove")
 class WifiRemoveCommand(cli.Application):
     """Remove a WiFi network from the SD card
@@ -135,6 +134,21 @@ class WifiClearCommand(cli.Application):
             write_wpa_supplicant_conf(mount_dir, conf)
 
         print("All WiFi networks removed.")
+
+
+@WifiCommand.subcommand("country")
+class WifiCountryCommand(cli.Application):
+    """Set the WiFi country code
+    """
+
+    def main(self, device, country):
+        country = country.upper()
+        with RaspbianMount(device) as mount_dir:
+            conf = parse_wpa_supplicant_conf(mount_dir)
+            conf.fields()['country'] = country
+            write_wpa_supplicant_conf(mount_dir, conf)
+
+        print("WiFi country changed to '{}'.".format(country))
 
 
 class RaspbianMount:

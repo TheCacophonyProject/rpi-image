@@ -14,6 +14,9 @@ from .mount import Mount
 # Used for configuration & installation access
 PROTECTED_SSID = 'skynet'
 
+PI_UID = 1000
+PI_GID = 1000
+
 
 class Tool(cli.Application):
     """Update the identity & WiFi details of a Cacophony Project Raspbian
@@ -188,8 +191,12 @@ class SshAddKeyCommand(cli.Application):
             ssh_dir = path.join(mount_dir, "home", "pi", ".ssh")
             os.makedirs(ssh_dir, mode=0o700, exist_ok=True)
 
-            with open(path.join(ssh_dir, "authorized_keys"), "a") as auth_file:
+            auth_keys_path = path.join(ssh_dir, "authorized_keys")
+            with open(auth_keys_path, "a") as auth_file:
                 auth_file.write("\n" + key + "\n")
+
+            os.chown(ssh_dir, PI_UID, PI_GID)
+            os.chown(auth_keys_path, PI_UID, PI_GID)
 
         print('SSH public key added for "pi" user.')
 

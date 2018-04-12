@@ -175,6 +175,25 @@ class SshEnableCommand(cli.Application):
         print("SSH daemon enabled at boot.")
 
 
+@SshCommand.subcommand("add-key")
+class SshAddKeyCommand(cli.Application):
+    """Add a SSH public key for the "pi" user.
+    """
+
+    def main(self, device, key_path):
+        with open(key_path) as key_file:
+            key = key_file.read().strip()
+
+        with RaspbianMount(device) as mount_dir:
+            ssh_dir = path.join(mount_dir, "home", "pi", ".ssh")
+            os.makedirs(ssh_dir, mode=0o700, exist_ok=True)
+
+            with open(path.join(ssh_dir, "authorized_keys"), "a") as auth_file:
+                auth_file.write("\n" + key + "\n")
+
+        print('SSH public key added for "pi" user.')
+
+
 class RaspbianMount:
     def __init__(self, device):
         # Ensure the kernel has the latest partition table for the SD

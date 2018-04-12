@@ -44,10 +44,6 @@ class IdCommand(cli.Application):
         help="the API server URL to upload to")
 
     def main(self, device, name, group):
-        # Ensure the kernel has the latest partition table for the SD
-        # card (in case it's just been imaged).
-        partprobe(device)
-
         with RaspbianMount(device) as mount_dir:
             set_minion_id(mount_dir, name)
             set_hostname(mount_dir, name)
@@ -104,6 +100,7 @@ class WifiSetCommand(cli.Application):
 
         print("{} network configured.".format(ssid))
 
+
 @WifiCommand.subcommand("remove")
 class WifiRemoveCommand(cli.Application):
     """Remove a WiFi network from the SD card
@@ -151,15 +148,50 @@ class WifiCountryCommand(cli.Application):
         print("WiFi country changed to '{}'.".format(country))
 
 
+@Tool.subcommand("ssh")
+class SshCommand(cli.Application):
+    """SSH related commands.
+    """
+
+    def main(self, *args):
+        if args:
+            print("Unknown command {0!r}".format(args[0]))
+            return 1
+        if not self.nested_command:
+            print("No subcommand given")
+            return 1
+        return 0
+
+
+@SshCommand.subcommand("enable")
+class SshEnableCommand(cli.Application):
+    """Enable SSH daemon at boot.
+    """
+
+    def main(self, device):
+        with RaspbianMount(device) as mount_dir:
+            open(path.join(mount_dir, "boot", "ssh"), "w").close()
+
+        print("SSH daemon enabled at boot.")
+
+
 class RaspbianMount:
     def __init__(self, device):
+        # Ensure the kernel has the latest partition table for the SD
+        # card (in case it's just been imaged).
+        partprobe(device)
+
         self.stack = None
-        self.root_partition = get_root_partition(device)
+        self.boot_device, self.root_device = get_raspbian_devices(device)
 
     def __enter__(self):
         with contextlib.ExitStack() as stack:
             mount_dir = stack.enter_context(tempfile.TemporaryDirectory())
-            stack.enter_context(Mount(self.root_partition, mount_dir))
+            stack.enter_context(Mount(self.root_device, mount_dir))
+
+            boot_dir = path.join(mount_dir, "boot")
+            stack.enter_context(Mount(self.boot_device, boot_dir))
+
             if not is_raspian(mount_dir):
                 raise OSError("Not a Raspbian image?")
 
@@ -170,12 +202,12 @@ class RaspbianMount:
         self.stack.close()
 
 
-def get_root_partition(device):
+def get_raspbian_devices(device):
     partitions = get_parititions(device)
     if len(partitions) != 2:
         raise ValueError("expected 2 partitions, found {}".format(
             len(partitions)))
-    return partitions[1]
+    return partitions
 
 
 def get_parititions(device):

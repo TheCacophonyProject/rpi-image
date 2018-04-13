@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if (( $# != 2 )); then
+    echo "usage:  read-image <input-device> <out.img>"
+    exit 1
+fi
+
+if [[ ! -x /usr/bin/pv ]]; then
+    echo "This script relies on the 'pv' tool. apt install pv?"
+    exit 1
+fi
+
+input_device=$1
+image_file=$2
+
+sudo pv $input_device > $image_file

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if (( $# != 2 )); then
+    echo "usage:  write-image <image.zip> <output-device>"
+    exit 1
+fi
+
+if [[ ! -x /usr/bin/pv ]]; then
+    echo "This script relies on the 'pv' tool. apt install pv?"
+    exit 1
+fi
+
+image_file=$1
+output_device=$2
+
+case "$image_file" in
+    *.zip)
+        decomp="unzip -p"
+        ;;
+    *.lrz)
+        decomp="lrzip -q -d -o -"
+        ;;
+    *)
+        echo "Unknown compression format for image file."
+        exit 1
+esac
+
+
+$decomp $image_file | sudo bash -c "pv --rate --bytes > $output_device"

@@ -12,7 +12,7 @@ from wpasupplicantconf import WpaSupplicantConf
 from .mount import Mount
 
 # Used for configuration & installation access
-PROTECTED_SSID = 'skynet'
+PROTECTED_SSID = "skynet"
 
 PI_UID = 1000
 PI_GID = 1000
@@ -23,7 +23,7 @@ class Tool(cli.Application):
     image stored on a SD card
     """
 
-    PROGNAME = 'cardtool'
+    PROGNAME = "cardtool"
 
     def main(self, *args):
         if args:
@@ -44,14 +44,16 @@ class IdCommand(cli.Application):
         "--url",
         str,
         default="https://api.cacophony.org.nz",
-        help="the API server URL to upload to")
+        help="the API server URL to upload to",
+    )
 
     def main(self, device, name, group):
         with RaspbianMount(device) as mount_dir:
             set_minion_id(mount_dir, name)
             set_hostname(mount_dir, name)
             update_hosts(mount_dir, name)
-            set_uploader_conf(mount_dir, self.apiUrl, name, group)
+            set_uploader_conf(mount_dir)
+            set_device_conf(mount_dir, self.url, name, group)
 
         print("Card updated.")
 
@@ -145,7 +147,7 @@ class WifiCountryCommand(cli.Application):
         country = country.upper()
         with RaspbianMount(device) as mount_dir:
             conf = parse_wpa_supplicant_conf(mount_dir)
-            conf.fields()['country'] = country
+            conf.fields()["country"] = country
             write_wpa_supplicant_conf(mount_dir, conf)
 
         print("WiFi country changed to '{}'.".format(country))
@@ -231,21 +233,21 @@ class RaspbianMount:
 def get_raspbian_devices(device):
     partitions = get_parititions(device)
     if len(partitions) != 2:
-        raise ValueError("expected 2 partitions, found {}".format(
-            len(partitions)))
+        raise ValueError("expected 2 partitions, found {}".format(len(partitions)))
     return partitions
 
 
 def get_parititions(device):
     return [
-        line.split()[0] for line in fdisk("-l", device).splitlines()
+        line.split()[0]
+        for line in fdisk("-l", device).splitlines()
         if line.startswith(device)
     ]
 
 
 def is_raspian(root_dir):
     with open(path.join(root_dir, "etc", "os-release")) as f:
-        return any(line.startswith('ID=raspbian') for line in f)
+        return any(line.startswith("ID=raspbian") for line in f)
 
 
 def set_minion_id(root_dir, name):
@@ -263,26 +265,41 @@ def update_hosts(root_dir, hostname):
     lines = []
     with open(hosts_path) as f:
         for line in f:
-            if line.startswith('127.0.0.1'):
-                lines.append('127.0.0.1 localhost ' + hostname + '\n')
+            if line.startswith("127.0.0.1"):
+                lines.append("127.0.0.1 localhost " + hostname + "\n")
             else:
                 lines.append(line)
 
-    with open(hosts_path, 'w') as f:
-        f.write(''.join(lines))
+    with open(hosts_path, "w") as f:
+        f.write("".join(lines))
 
 
-def set_uploader_conf(root_dir, url, name, group):
+def set_uploader_conf(root_dir):
     with open(path.join(root_dir, "etc", "thermal-uploader.yaml"), "w") as f:
         f.write(
-            dedent("""\
+            dedent(
+                """\
             directory: "/var/spool/cptv"
+            """
+            )
+        )
+
+    try_delete(path.join(root_dir, "etc", "thermal-uploader-priv.yaml"))
+
+
+def set_device_conf(root_dir, url, name, group):
+    with open(path.join(root_dir, "etc", "cacophony", "device.yaml"), "w") as f:
+        f.write(
+            dedent(
+                """\
             server-url: "{url}"
             group: "{group}"
             device-name: "{name}"
-            """).format(url=url, group=group, name=name))
+            """
+            ).format(url=url, group=group, name=name)
+        )
 
-    try_delete(path.join(root_dir, "etc", "thermal-uploader-priv.yaml"))
+    try_delete(path.join(root_dir, "etc", "cacophony", "device-priv.yaml"))
 
 
 def parse_wpa_supplicant_conf(root):
@@ -306,7 +323,7 @@ def try_delete(filename):
         pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if os.geteuid() != 0:
         sys.exit("Not running as root. sudo?")
     Tool.run()

@@ -12,7 +12,7 @@ from wpasupplicantconf import WpaSupplicantConf
 from .mount import Mount
 
 # Used for configuration & installation access
-PROTECTED_SSID = "skynet"
+PROTECTED_SSID = "bushnet"
 
 PI_UID = 1000
 PI_GID = 1000

@@ -52,7 +52,7 @@ scp cacophony-setup.sh pi@raspberrypi:
 
 * Run the setup script:
 ```
-ssh pi@raspberrypi cacophony-setup.sh
+ssh pi@raspberrypi.local 'sudo ./cacophony-setup.sh'
 ```
 
 This will take a while. When it's done the Pi wil shut down.

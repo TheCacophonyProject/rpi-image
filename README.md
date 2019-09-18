@@ -75,6 +75,8 @@ This will take a while. When it's done the Pi wil shut down.
 ```
 sudo ./pishrink.sh [out.img]
 ```
+if pishrink.sh is causing issues try looking here 
+https://github.com/gmenezesg/fix_orphaned_inode_list
 
 * Compress the image:
 ```

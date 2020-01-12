@@ -41,5 +41,5 @@ https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2019-04-09/
 ```
 ./image-finalise
 ```
-* Plug SD card back into Raspberry Pi and check that it connects to salt properly
+* if pishrink.sh is causing issues try looking here https://github.com/gmenezesg/fix_orphaned_inode_list
 * Copy image file to Google Drive.

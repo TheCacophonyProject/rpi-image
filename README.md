@@ -8,10 +8,7 @@ Tooling for creating Cacophony Project Raspberry Pi image.
 ./write-image <img.lrz> /dev/mmcblk0
 ```
 
-* Set the Cacophony Project id for the card:
-```
-./cardtool id /dev/mmcblk0 [name] [group]
-```
+* Insert into and then power on camera. The camera will automatically register. The name and group can be changed through the management interface.
 
 # Creating a new image
 
@@ -20,67 +17,29 @@ us with the Cacophony Project. The resulting image will be based on
 the latest Raspbian Lite image and will include the latest software
 and configuration used by the Cacophony Project.
 
-## Prepare Image
-
-* Download the latest Raspian Lite image from https://www.raspberrypi.org/downloads/raspbian/
-* Write the image to an SD card (this will take a little while):
+* ~~ Download the latest Raspian Lite image from https://www.raspberrypi.org/downloads/raspbian/ ~~
+* Download the last Raspbian Lite Strech image (have not tested buster yet)
+https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2019-04-09/
+* Plug a SD card (8GB works best) into your computer
+* Prepare the image
 ```
-./write-image <image.zip> /dev/mmcblk0`
+./image-prepare <image.zip> <sd-mount-point>
 ```
-
-* Enable SSH server & add Cacophony public SSH key:
-```
-./cardtool ssh enable /dev/mmcblk0
-./cardtool ssh add-key /dev/mmcblk0 ~/.ssh/cacophony-pi.pub
-```
-
-* Set WiFi country and add your local WiFi details:
+* If needed set WiFi country and add your local WiFi details. Bushnet is added by default.
 ```
 ./cardtool wifi country /dev/mmcblk0 NZ
 ./cardtool wifi set /dev/mmcblk0 <ssid> <psk>
 ```
-
-TODO: automate the above further.
-
-## Configure Image
-
 * Eject the SD card from the computer install it into a Pi and boot it.
-* Copy the setup script to the Pi:
+* Ensure that you can ssh onto the pi without user input (this ensures the configure script doesn't need your input)
+* Run the config sctipt
 ```
-scp cacophony-setup.sh pi@raspberrypi:
+./image-configure.sh
 ```
-
-* Run the setup script:
-```
-ssh pi@raspberrypi.local 'sudo ./cacophony-setup.sh'
-```
-
-This will take a while. When it's done the Pi wil shut down.
-
-
-## Finalise Image
-
 * Insert the SD card back into your computer.
-* Remove WiFi credentials from the image (TODO: do this as part of cacophony-setup.sh)
+* Run the finalise script
 ```
-./cardtool wifi clear /dev/mmcblk0
+./image-finalise
 ```
-* (TODO: delete log files)
-* Copy the image off the card:
-```
-./read-image /dev/mmcblk0 [out.img]
-```
-
-* Shrink the image:
-```
-sudo ./pishrink.sh [out.img]
-```
-
-* Compress the image:
-```
-lrzip <out.img>
-```
-
+* Plug SD card back into Raspberry Pi and check that it connects to salt properly
 * Copy image file to Google Drive.
-
-TODO: automate the above further.

@@ -13,6 +13,7 @@ from .mount import Mount
 
 # Used for configuration & installation access
 PROTECTED_SSID = "bushnet"
+PROTECTED_SSID_PASSWORD = "feathers"
 
 PI_UID = 1000
 PI_GID = 1000
@@ -96,7 +97,7 @@ class WifiSetCommand(cli.Application):
     """
 
     def main(self, device, ssid, password):
-        if ssid == PROTECTED_SSID:
+        if ssid == PROTECTED_SSID and password != PROTECTED_SSID_PASSWORD:
             sys.exit("This SSID can't be changed.")
         with RaspbianMount(device) as mount_dir:
             conf = parse_wpa_supplicant_conf(mount_dir)

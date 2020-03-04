@@ -17,7 +17,7 @@ us with the Cacophony Project. The resulting image will be based on
 the latest Raspbian Lite image and will include the latest software
 and configuration used by the Cacophony Project.
 
-* ~~ Download the latest Raspian Lite image from https://www.raspberrypi.org/downloads/raspbian/ ~~
+* ~~Download the latest Raspian Lite image from https://www.raspberrypi.org/downloads/raspbian/~~
 * Download the last Raspbian Lite Strech image (have not tested buster yet)
 https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2019-04-09/
 * Plug a SD card (8GB works best) into your computer

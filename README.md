@@ -1,7 +1,7 @@
 Tooling for creating Cacophony Project Raspberry Pi image.
 
-# Python dependencies
 Requires:
+Python - 
 * plumbum
 * WpaSupplicantConf
 

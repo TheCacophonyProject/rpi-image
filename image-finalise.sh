@@ -18,4 +18,4 @@ echo "Reading image"
 echo "Shrinking image"
 sudo ./pishrink.sh $name
 echo "Compressing image"
-lrzip $name
+zip $name.zip $name

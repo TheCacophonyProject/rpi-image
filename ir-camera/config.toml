@@ -1,0 +1,12 @@
+
+[battery]
+  enable-voltage-readings = false
+  full-battery-reading = 0
+  low-battery-reading = 0
+  no-battery-reading = 0
+
+[device]
+  ir = "true"
+
+[thermal-motion]
+  run-classifier = false

@@ -1,0 +1,13 @@
+- ~add salt requirement for not starting without minion file~
+- ~Enable thermal-uploader~
+- ~Enable ir-camera~
+- ~Change hostname~
+- ~Update main.py~
+- ~Change API that deivce-register uses~
+
+
+- Change hostname to ir-image	`sudo raspi-config`
+- Delete devices config		`sudo cacophony-config -d device -d secrets` 
+- Stop salt from running 	`sUdo systemctl stop salt-minion.service`
+- Delete salt pki folder	`sudo rm -r /etc/salt/pki/`
+- Delete salt minion file	`sudo rm /etc/salt/minion_id`

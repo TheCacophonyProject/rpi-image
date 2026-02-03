@@ -13,11 +13,11 @@
 - Flash the SD card with the latest image.
 - Put SD card in the camera and power it up.
 - Wait for LED to turn solid green. This means that it has connected to a wifi network, hopefully your bushnet network.
-- Find the IP or hostname (name-group.local) of the device. If the host name is `tc2-image` wait for it to get a new name and restart. You will see it come up again after it gets a new name and restarts. On linux I run this to see the devices `avahi-browse --resolve _cacophonator-management._tcp` 
+- Find the IP or hostname (name-group.local) of the device. If the host name is `tc2-image` wait for it to get a new name and restart. You will see it come up again after it gets a new name and restarts. On linux I run this to see the devices `avahi-browse --resolve _cacophonator-management._tcp`
 - Open up a browser and connect to the device through your computer using the hostname or IP address.
 - Go to the `About` page. `Advanced` -> `About`
 - Get the `Salt Minion ID` and then accept it to salt.
-- Every few seconds refresh the salt page until it shows it starting a salt update. This should happen automatically onces the camera sees that it is accepted to salt.
+- Every few seconds refresh the `About` page until it shows it starting a salt update. This should happen within a minute onces the camera is accepted to salt.
 - Once the salt update is done (might see some errors about modinfo, just ignore those for now) you can rename/change group of the device to what you want.
 
 ## Notes
@@ -39,3 +39,9 @@ Using SanDisk ones seams to work well.
 Get the SD cards from a trusted supplier as there are lots of "fake" SD cards sold by sites like AliExpress and Temu.
 
 When flashing the SD card make sure you use a program that will verify the SD card write like [etcher](https://etcher.balena.io/).
+
+### Raspberry Pi Wifi strength
+
+I have previously put just the camera electronics (not in a case) down on a ESD mat. This seams to sometimes have quite a bad affect on the RPi signal strength/speed when the RPi is sitting directly on the mat.
+
+As the antenna is on the RPi and will be right up against the mat, and the hat is above it I can see that this would shield the antenna a bit causing the slower/less reliable WiFi.

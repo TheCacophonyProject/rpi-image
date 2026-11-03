@@ -1,2 +1,0 @@
-plumbum ~= 1.6.6
-wpasupplicantconf == 0.1

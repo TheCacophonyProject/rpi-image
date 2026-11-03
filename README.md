@@ -1,53 +1,51 @@
-Tooling for creating Cacophony Project Raspberry Pi image.
+# rpi-image
 
-Requires:
-Python - 
-* plumbum
-* WpaSupplicantConf
+Tooling and instructions for making Raspberry Pi OS images for Thermal Camera 2 (TC2).
 
-e.g.
-python3 -m pip install plumbum WpaSupplicantConf
+To set up a camera from an existing image, see [new-camera-setup.md](new-camera-setup.md).
 
-# Writing a pre-existing Cacophony Project image
+## Making a new image
 
-* Insert an SD card.
-* Write the image to the SD card:
-```
-./write-image <img.lrz> /dev/mmcblk0
-```
+Each image is based on the previous one.
 
-* Insert into and then power on camera. The camera will automatically register. The name and group can be changed through the management interface.
+1. Flash the latest image to an SD card, put it in a camera and power it up.
+2. Run a salt update on the camera.
+3. On the camera, tidy the image. `new-image-tidy.sh` is installed by salt.
 
-# Creating a new image
+   ```bash
+   sudo new-image-tidy.sh
+   ```
 
-These instructions describe how to create a new Raspberry Pi image for
-us with the Cacophony Project. The resulting image will be based on
-the latest Raspbian Lite image and will include the latest software
-and configuration used by the Cacophony Project.
+4. Power off the camera, then put the SD card in your computer.
+5. From this repo, make the image. This needs `pv` and `zip`.
 
-* ~~Download the latest Raspian Lite image from https://www.raspberrypi.org/downloads/raspbian/~~
-* Download the last Raspbian Lite Strech image (have not tested buster yet)
-https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2019-04-09/
-* Plug a SD card (8GB works best) into your computer
-* Prepare the image
-```
-./image-prepare <image.zip> <sd-mount-point>
-```
-* If needed set WiFi country and add your local WiFi details. Bushnet is added by default.
-```
-./cardtool wifi country /dev/mmcblk0 NZ
-./cardtool wifi set /dev/mmcblk0 <ssid> <psk>
-```
-* Eject the SD card from the computer install it into a Pi and boot it.
-* Ensure that you can ssh onto the pi without user input (this ensures the configure script doesn't need your input)
-* Run the config sctipt
-```
-./image-configure.sh
-```
-* Insert the SD card back into your computer.
-* Run the finalise script
-```
-./image-finalise
-```
-* if pishrink.sh is causing issues try looking here https://github.com/gmenezesg/fix_orphaned_inode_list
-* Copy image file to Google Drive.
+   ```bash
+   sudo ./image-finalise.sh /dev/mmcblk0
+   ```
+
+   This creates `tc2-<date>.img` and `tc2-<date>.img.zip` in the current folder.
+6. Copy the zip to Google Drive.
+
+If `pishrink.sh` has problems, try <https://github.com/gmenezesg/fix_orphaned_inode_list>
+
+## How the base image was made
+
+You shouldn't need this unless you have to start again without a previous image. Some of
+these steps aren't done by salt, so the images only have them because each one builds on the last.
+
+1. Download [Raspberry Pi OS Lite arm64 2023-12-11](https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2023-12-11/).
+2. Flash it with Raspberry Pi Imager, using these options:
+   - Set the hostname to `tc2`.
+   - Allow public-key authentication only, with the key from `tc2/auth/cacophony-pi.pub` in saltops.
+   - Add your WiFi network if you won't be using the ethernet port.
+3. [Install salt](https://docs.saltproject.io/salt/install-guide/en/latest/topics/install-by-operating-system/debian.html#install-salt-on-debian-12-bookworm-arm64), then `sudo apt install salt-minion`.
+4. Install the packages and create the journal folder:
+
+   ```bash
+   sudo apt-get install -y pipx openocd dnsmasq
+   sudo PIPX_BIN_DIR=/usr/local/bin pipx install pymcuprog==3.14.2.9
+   sudo mkdir -p /var/log/journal
+   sudo systemd-tmpfiles --create --prefix /var/log/journal
+   ```
+
+5. Run a salt update. It might take a couple of runs.

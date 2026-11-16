@@ -3,16 +3,14 @@
 set -e
 
 if (( $# != 1 )); then
-    echo "Should have one parameter <card-mount-point>"
+    echo "Should have one parameter <sd-card-device>"
     exit 1
 fi
 
 sdCard=$1
 date=`date +%Y-%m-%d`
-name="thermal-recorder-$date.img"
+name="tc2-$date.img"
 
-#echo "Removing wifi details"
-#./cardtool wifi clear $sdCard
 echo "Reading image"
 ./read-image $sdCard $name
 echo "Shrinking image"
